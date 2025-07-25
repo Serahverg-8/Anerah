@@ -1,0 +1,7 @@
+[
+    {"hour": 0, "heart_rate": 72, "hrv": 45, "movement": 0.5},
+    {"hour": 1, "heart_rate": 64, "hrv": 52, "movement": 0.3},
+    {"hour": 2, "heart_rate": 60, "hrv": 58, "movement": 0.1},
+    {"hour": 3, "heart_rate": 62, "hrv": 60, "movement": 0.25}
+  ]
+  

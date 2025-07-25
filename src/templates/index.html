@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Sleep Stage Predictor</title>
+  <style>
+    body { font-family: Arial, sans-serif; margin: 20px; }
+    label, input, button { font-size: 1.1em; margin: 5px 0; display: block; }
+    #result { margin-top: 20px; padding: 10px; border: 1px solid #ccc; }
+  </style>
+</head>
+<body>
+  <h1>Sleep Stage Predictor</h1>
+
+  <label for="hour">Hour into Sleep:</label>
+  <input type="number" id="hour" min="0" max="7" value="0" />
+
+  <label for="mood">Mood (optional):</label>
+  <input type="text" id="mood" placeholder="e.g. tired" />
+
+  <button id="predictBtn">Predict Sleep Stage</button>
+
+  <div id="result"></div>
+
+  <script>
+    document.getElementById('predictBtn').addEventListener('click', async () => {
+      const hour = parseInt(document.getElementById('hour').value);
+      const mood = document.getElementById('mood').value;
+
+      if (isNaN(hour)) {
+        alert('Please enter a valid hour.');
+        return;
+      }
+
+      const response = await fetch('/predict_stage', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ hour, mood })
+      });
+
+      const data = await response.json();
+
+      if (data.error) {
+        document.getElementById('result').innerText = 'Error: ' + data.error;
+      } else {
+        document.getElementById('result').innerHTML = `
+          <strong>Stage:</strong> ${data.stage}<br />
+          <strong>Sound:</strong> ${data.sound}<br />
+          <strong>Explanation:</strong> ${data.explanation}
+        `;
+      }
+    });
+  </script>
+</body>
+</html>

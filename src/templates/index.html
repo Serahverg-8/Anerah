@@ -1,55 +1,107 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
-  <meta charset="UTF-8" />
-  <title>Sleep Stage Predictor</title>
-  <style>
-    body { font-family: Arial, sans-serif; margin: 20px; }
-    label, input, button { font-size: 1.1em; margin: 5px 0; display: block; }
-    #result { margin-top: 20px; padding: 10px; border: 1px solid #ccc; }
-  </style>
+  <title>Sleep Soundscape AI Demo</title>
 </head>
 <body>
-  <h1>Sleep Stage Predictor</h1>
+  <h2>Sleep Soundscape AI Demo</h2>
+  <label>Mood before bed:
+    <input id="mood" placeholder="e.g. tired, stressed" />
+  </label>
+  <button id="startBtn">Start Sleep Session</button>
+  <button id="endBtn" disabled>End Session</button>
 
-  <label for="hour">Hour into Sleep:</label>
-  <input type="number" id="hour" min="0" max="7" value="0" />
-
-  <label for="mood">Mood (optional):</label>
-  <input type="text" id="mood" placeholder="e.g. tired" />
-
-  <button id="predictBtn">Predict Sleep Stage</button>
-
-  <div id="result"></div>
+  <table border="1" cellpadding="8" cellspacing="0" style="margin-top:20px;">
+    <thead>
+      <tr>
+        <th>Timestamp (sec)</th>
+        <th>Predicted Stage</th>
+        <th>Ground Truth Stage</th>
+        <th>Suggested Sound</th>
+        <th>Reasoning</th>
+      </tr>
+    </thead>
+    <tbody id="resultsBody"></tbody>
+  </table>
 
   <script>
-    document.getElementById('predictBtn').addEventListener('click', async () => {
-      const hour = parseInt(document.getElementById('hour').value);
-      const mood = document.getElementById('mood').value;
+    let simulatedData = [];
 
-      if (isNaN(hour)) {
-        alert('Please enter a valid hour.');
+    // Load simulated data from external JSON file in /static/data/
+    fetch('/static/data/sim_oura_wo_stages.json')
+      .then(res => res.json())
+      .then(json => {
+          simulatedData = json;
+          console.log('Simulated data loaded', simulatedData);
+      })
+      .catch(err => {
+          alert('Failed to load simulated data: ' + err);
+      });
+
+    let intervalId;
+    let index = 0;
+    let mood = "";  // mood input captured on session start
+
+    document.getElementById("startBtn").onclick = () => {
+      mood = document.getElementById("mood").value.trim();
+      if (!mood) {
+        alert("Please enter your mood before starting.");
+        return;
+      }
+      if (simulatedData.length === 0) {
+        alert("Data not loaded yet, please wait.");
         return;
       }
 
-      const response = await fetch('/predict_stage', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ hour, mood })
-      });
+      index = 0;
+      document.getElementById("resultsBody").innerHTML = "";
+      document.getElementById("startBtn").disabled = true;
+      document.getElementById("endBtn").disabled = false;
 
-      const data = await response.json();
+      intervalId = setInterval(() => {
+        if (index >= simulatedData.length) {
+          clearInterval(intervalId);
+          document.getElementById("startBtn").disabled = false;
+          document.getElementById("endBtn").disabled = true;
+          return;
+        }
 
-      if (data.error) {
-        document.getElementById('result').innerText = 'Error: ' + data.error;
-      } else {
-        document.getElementById('result').innerHTML = `
-          <strong>Stage:</strong> ${data.stage}<br />
-          <strong>Sound:</strong> ${data.sound}<br />
-          <strong>Explanation:</strong> ${data.explanation}
-        `;
-      }
-    });
+        // Prepare data for API, include mood
+        const data = {...simulatedData[index], mood};
+
+        fetch("/predict_stage", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(data)
+        })
+          .then(res => res.json())
+          .then(json => {
+            const tbody = document.getElementById("resultsBody");
+            const tr = document.createElement("tr");
+            tr.innerHTML = `
+              <td>${json.timestamp_sec || "N/A"}</td>
+              <td>${json.stage || json.predicted_stage || "N/A"}</td>
+              <td>${json.ground_truth_stage || "N/A"}</td>
+              <td>${json.sound || "N/A"}</td>
+              <td>${json.explanation || json.reasoning || "N/A"}</td>
+            `;
+            tbody.appendChild(tr);
+            index++;
+          })
+          .catch(err => {
+            alert("Error fetching prediction: " + err);
+            clearInterval(intervalId);
+            document.getElementById("startBtn").disabled = false;
+            document.getElementById("endBtn").disabled = true;
+          });
+      }, 15000); // update every 15 seconds
+    };
+
+    document.getElementById("endBtn").onclick = () => {
+      clearInterval(intervalId);
+      document.getElementById("startBtn").disabled = false;
+      document.getElementById("endBtn").disabled = true;
+    };
   </script>
 </body>
 </html>

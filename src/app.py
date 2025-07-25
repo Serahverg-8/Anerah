@@ -15,21 +15,20 @@ if not os.path.exists(FEEDBACK_FILE):
 
 @app.route("/")
 def home():
+    # Serve your main UI page
     return render_template("index.html")
 
 @app.route("/predict_stage", methods=["POST"])
 def predict_stage():
     data = request.get_json(force=True)
-    hour = data.get("hour")
-    mood = data.get("mood", None)
-
-    if hour is None:
-        return jsonify({"error": "Missing required parameter: hour"}), 400
-
     try:
-        result = predict_sleep_stage(hour, mood)
+        print("Received data:", data)  # log incoming
+        result = predict_sleep_stage(data)
+        print("Prediction result:", result)  # log outgoing
         return jsonify(result)
     except Exception as e:
+        import traceback
+        print("Error in /predict_stage:", traceback.format_exc())  # full error
         return jsonify({"error": str(e)}), 500
 
 @app.route("/submit_feedback", methods=["POST"])
@@ -42,8 +41,9 @@ def submit_feedback():
     with open(FEEDBACK_FILE, "r") as f:
         all_feedback = json.load(f)
 
-    # Append new feedback with timestamp
-    feedback["timestamp"] = int(os.times()[4])  # simple timestamp
+    # Append new feedback with timestamp (using time.time())
+    import time
+    feedback["timestamp"] = int(time.time())
     all_feedback.append(feedback)
 
     # Save back
@@ -53,4 +53,4 @@ def submit_feedback():
     return jsonify({"message": "Feedback received, thank you!"})
 
 if __name__ == "__main__":
-    app.run(debug=True)
+    app.run(debug=True, host="127.0.0.1", port=5000)

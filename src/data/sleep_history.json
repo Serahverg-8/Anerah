@@ -1,8 +1,73 @@
 [
-    {"date": "2025-07-20", "deep": 95, "rem": 65, "light": 210, "awake": 30},
-    {"date": "2025-07-21", "deep": 80, "rem": 70, "light": 220, "awake": 20},
-    {"date": "2025-07-22", "deep": 85, "rem": 60, "light": 215, "awake": 40},
-    {"date": "2025-07-23", "deep": 90, "rem": 75, "light": 200, "awake": 30},
-    {"date": "2025-07-24", "deep": 70, "rem": 80, "light": 220, "awake": 40}
+    {
+      "date": "2025-07-21",
+      "duration_seconds": 90.0,
+      "avg_heart_rate": 68,
+      "avg_hrv": 55,
+      "avg_respiration_rate": 16.5,
+      "movement_score": 0.51,
+      "stages_seconds": {
+        "awake": 2.9,
+        "deep": 14.1,
+        "light": 51.5,
+        "rem": 21.5
+      }
+    },
+    {
+      "date": "2025-07-22",
+      "duration_seconds": 90.0,
+      "avg_heart_rate": 62,
+      "avg_hrv": 50,
+      "avg_respiration_rate": 16.6,
+      "movement_score": 0.56,
+      "stages_seconds": {
+        "awake": 4.4,
+        "deep": 12.0,
+        "light": 57.7,
+        "rem": 16.0
+      }
+    },
+    {
+      "date": "2025-07-23",
+      "duration_seconds": 90.0,
+      "avg_heart_rate": 66,
+      "avg_hrv": 69,
+      "avg_respiration_rate": 13.9,
+      "movement_score": 0.32,
+      "stages_seconds": {
+        "awake": 5.1,
+        "deep": 15.5,
+        "light": 51.3,
+        "rem": 18.1
+      }
+    },
+    {
+      "date": "2025-07-24",
+      "duration_seconds": 90.0,
+      "avg_heart_rate": 55,
+      "avg_hrv": 51,
+      "avg_respiration_rate": 12.7,
+      "movement_score": 0.34,
+      "stages_seconds": {
+        "awake": 2.4,
+        "deep": 10.2,
+        "light": 59.3,
+        "rem": 18.2
+      }
+    },
+    {
+      "date": "2025-07-25",
+      "duration_seconds": 90.0,
+      "avg_heart_rate": 70,
+      "avg_hrv": 54,
+      "avg_respiration_rate": 11.4,
+      "movement_score": 0.35,
+      "stages_seconds": {
+        "awake": 5.2,
+        "deep": 21.1,
+        "light": 44.5,
+        "rem": 19.1
+      }
+    }
   ]
   

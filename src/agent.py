@@ -1,71 +1,48 @@
 import json
+import re
 from gemini import query_gemini
+from utils import find_ground_truth
 
-import os
-import json
+def extract_json_from_response(response: str) -> str:
+    match = re.search(r"```(?:json)?\s*(\{.*?\})\s*```", response, re.DOTALL)
+    if match:
+        return match.group(1)
+    return response.strip()
 
-BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-
-with open(os.path.join(BASE_DIR, "data", "sleep_history.json")) as f:
-    sleep_history = json.load(f)
-
-with open(os.path.join(BASE_DIR, "data", "mock_oura.json")) as f:
-    biometric_data = json.load(f)
-
-def predict_sleep_stage(hour, mood=None):
-    if hour >= len(biometric_data):
-        return {
-            "stage": "Wake",
-            "sound": "white_noise.mp3",
-            "explanation": "User is assumed to be awake after end of sleep cycle."
-        }
-
-    current_bio = biometric_data[hour]
-
+def predict_sleep_stage(biometrics: dict):
     prompt = f"""
-You are a sleep agent optimizing soundscapes for restful sleep.
+    You are a sleep science assistant helping personalize soundscapes during sleep.
 
-The user has the following sleep history over the past 5 nights:
-{json.dumps(sleep_history, indent=2)}
+Available sounds:
+- white_noise.mp3: Neutral masking noise, good for light sleep
+- pink_noise.mp3: Softer masking, better for deep sleep
+- sleepy_rain.mp3: Gentle rain, promotes relaxation
+- distant_breeze.mp3: Soft wind, ideal for REM sleep
+- forest_atmosphere.mp3: Calming and grounding, good for transitions
+- silence.mp3: No sound, use this if user needs silence
 
-It is now hour {hour} into sleep. Current biometrics are:
-- Heart Rate: {current_bio['heart_rate']} bpm
-- HRV: {current_bio['hrv']}
-- Movement Index: {current_bio['movement']}
+    Given the following biometric data, predict the current sleep stage (awake, light, deep, rem):
+    Heart rate: {biometrics['heart_rate']}
+    HRV: {biometrics['hrv']}
+    Respiration rate: {biometrics['respiration_rate']}
+    Movement score: {biometrics['movement_score']}
+    Return JSON with keys: stage, sound, explanation.
+    """
 
-{"The user went to sleep feeling " + mood + "." if mood else ""}
-
-Please respond with concise, valid JSON only, without any extra commentary.
-
-Return a JSON object in this format:
-{{
-  "stage": "REM",
-  "sound": "distant_breeze.mp3",
-  "explanation": "HRV and stillness suggest REM sleep."
-}}
-"""
+    raw_response = query_gemini(prompt)
+    cleaned_response = extract_json_from_response(raw_response)
 
     try:
-        response = query_gemini(prompt)
-        print("Raw Gemini response:", repr(response))  # Debug print
-
-        # Remove markdown code fences if present
-        if response.startswith("```json"):
-            response = response.partition("\n")[2]  # Remove first line ```json
-            if response.endswith("```"):
-                response = response[:-3]  # Remove last line ```
-            response = response.strip()
-
-        return json.loads(response)
-    except json.JSONDecodeError:
-        # Try to auto-fix truncated JSON by adding a closing brace
-        fixed_response = response.strip()
-        if not fixed_response.endswith('}'):
-            fixed_response += "}"
-        return json.loads(fixed_response)
+        result = json.loads(cleaned_response)
     except Exception as e:
         return {
             "stage": "Unknown",
             "sound": "silence.mp3",
-            "explanation": f"Agent error: {str(e)}"
+            "explanation": f"Agent error: {str(e)}",
+            "timestamp_sec": biometrics["timestamp_sec"],
+            "ground_truth_stage": find_ground_truth(biometrics["timestamp_sec"])
         }
+
+    result["timestamp_sec"] = biometrics["timestamp_sec"]
+    result["ground_truth_stage"] = find_ground_truth(biometrics["timestamp_sec"])
+    return result
